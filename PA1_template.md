@@ -56,7 +56,7 @@ And how about a histogram of that?
 
 
 ```r
-hist(totPerDay,breaks=20,col='light blue',ylab='Total Steps per Day',main='Histogram of Steps per Day')
+hist(totPerDay,breaks=20,col='light blue',xlab='Total Steps per Day',main='Histogram of Steps per Day')
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
@@ -77,7 +77,7 @@ Here's a plot of the average number of steps per increment.
 
 ```r
 totPerInc <- tapply(walk$steps,walk$interval,mean, na.rm=TRUE)
-plot(totPerInc,type='l',xlab='Increment of the Day',ylab='Total Steps per Increment')
+plot(totPerInc,type='l',xlab='Increment of the Day',ylab='Average Steps per Increment')
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
@@ -86,10 +86,65 @@ plot(totPerInc,type='l',xlab='Increment of the Day',ylab='Total Steps per Increm
 maxInc <- which.max(totPerInc)
 maxSteps <- totPerInc[maxInc]
 ```
-The most steps, on average, occur during the 104th increment when an average of 206.1698113 steps are taken.
+The most steps, on average, occur during the 104th increment when an average of 206.17 steps are taken.
 
 ## Imputing missing values
+Step 1 for filling in the missing values is to determine how many there are.
 
+```r
+totMissing <- length(which(is.na(walk$steps)))
+```
+There are 2304 missing data points.
 
+To fill in the missing points, I'm going to look ahead to the next part of the assignment a bit.
+Since some days are completely missing, I don't want to just use the average within a day, because that would still be unknown.
+Instead, I'm going to use a regression to predict the number of steps by the interval, day, and day of the week.
+
+```r
+walk$day <- weekdays(walk$date)
+mod1 <- lm(steps ~ date+interval+day,data=walk)
+missPoints <- subset(walk,is.na(steps))
+predictions <- predict(mod1,new=missPoints[,2:4])
+missPoints$steps <- predictions
+```
+So now we have the missing observations separated out and replaced with an imputed guess.  The model isn't great;  
+the adjusted R squared is less than .01.  But the regression says that some days are predictive  
+as is the interval in the day, so hopefully the imputation is better than a very simple average.
+
+Now we want to make a new dataset that incorporates the imputation and look at the mean and median steps across days.
+
+```r
+require(dplyr)
+```
+
+```
+## Loading required package: dplyr
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
+walk2 <- walk %>% filter(!is.na(steps)) %>% bind_rows(missPoints) %>% arrange(date,interval)
+totPerDay2 <- tapply(walk2$steps,walk2$date,sum,na.rm=TRUE)
+hist(totPerDay2,breaks=20,col='light blue',xlab='Total Steps per Day',main='Histogram of Steps per Day After Imputation')
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
+
+```r
+meanSteps2 <- mean(totPerDay2)
+medianSteps2 <- median(totPerDay2)
+```
+After imputaton, the mean is 1.082349\times 10^{4} and the median is 1.1015\times 10^{4}.  
+This is a difference of 1469.26 for the average and 620 for the median,
+which is a noticeable difference.
 
 ## Are there differences in activity patterns between weekdays and weekends?

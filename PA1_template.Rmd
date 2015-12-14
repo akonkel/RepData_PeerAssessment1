@@ -56,7 +56,37 @@ maxSteps <- totPerInc[maxInc]
 The most steps, on average, occur during the `r maxInc`th increment when an average of `r round(maxSteps,2)` steps are taken.
 
 ## Imputing missing values
+Step 1 for filling in the missing values is to determine how many there are.
+``` {r}
+totMissing <- length(which(is.na(walk$steps)))
+```
+There are `r totMissing` missing data points.
 
+To fill in the missing points, I'm going to look ahead to the next part of the assignment a bit.
+Since some days are completely missing, I don't want to just use the average within a day, because that would still be unknown.
+Instead, I'm going to use a regression to predict the number of steps by the interval, day, and day of the week.
+``` {r}
+walk$day <- weekdays(walk$date)
+mod1 <- lm(steps ~ date+interval+day,data=walk)
+missPoints <- subset(walk,is.na(steps))
+predictions <- predict(mod1,new=missPoints[,2:4])
+missPoints$steps <- predictions
+```
+So now we have the missing observations separated out and replaced with an imputed guess.  The model isn't great;  
+the adjusted R squared is less than .01.  But the regression says that some days are predictive  
+as is the interval in the day, so hopefully the imputation is better than a very simple average.
 
+Now we want to make a new dataset that incorporates the imputation and look at the mean and median steps across days.
+``` {r, fig.height=4}
+require(dplyr)
+walk2 <- walk %>% filter(!is.na(steps)) %>% bind_rows(missPoints) %>% arrange(date,interval)
+totPerDay2 <- tapply(walk2$steps,walk2$date,sum,na.rm=TRUE)
+hist(totPerDay2,breaks=20,col='light blue',xlab='Total Steps per Day',main='Histogram of Steps per Day After Imputation')
+meanSteps2 <- mean(totPerDay2)
+medianSteps2 <- median(totPerDay2)
+```
+After imputaton, the mean is `r round(meanSteps2,2)` and the median is `r medianSteps2`.  
+This is a difference of `r round(meanSteps2-meanSteps,2)` for the average and `r medianSteps2-medianSteps` for the median,
+which is a noticeable difference.
 
 ## Are there differences in activity patterns between weekdays and weekends?
