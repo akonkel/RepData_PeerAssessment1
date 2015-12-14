@@ -14,7 +14,7 @@ I'll also convert the date column to the date class.
 
 ```r
 walk <- read.csv('activity.csv',header=TRUE,as.is=TRUE)
-walk$date=as.Date(walk$date,format='%Y-%m-%d')
+walk$date <- as.Date(walk$date,format='%Y-%m-%d')
 ```
 And now we should be good to go.
 
@@ -56,7 +56,7 @@ And how about a histogram of that?
 
 
 ```r
-hist(totPerDay,breaks=20,col='light blue')
+hist(totPerDay,breaks=20,col='light blue',ylab='Total Steps per Day',main='Histogram of Steps per Day')
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
@@ -72,8 +72,21 @@ medianSteps <- median(totPerDay)
 The mean is 9354.23 and the median is 10395.
 
 ## What is the average daily activity pattern?
+Next, instead of looking at the level of days we'll look at the level of 5 minute increments within days.  
+Here's a plot of the average number of steps per increment.
 
+```r
+totPerInc <- tapply(walk$steps,walk$interval,mean, na.rm=TRUE)
+plot(totPerInc,type='l',xlab='Increment of the Day',ylab='Total Steps per Increment')
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+
+```r
+maxInc <- which.max(totPerInc)
+maxSteps <- totPerInc[maxInc]
+```
+The most steps, on average, occur during the 104th increment when an average of 206.1698113 steps are taken.
 
 ## Imputing missing values
 
