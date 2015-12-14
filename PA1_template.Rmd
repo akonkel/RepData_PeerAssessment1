@@ -7,8 +7,19 @@ output:
 
 
 ## Loading and preprocessing the data
+First we'll need to unzip the file to make the data accessible.
+``` {r}
+walk <- unzip('activity.zip')
+```
 
+And now we'll need to get the file loaded for analysis.
+I'll also convert the date column to the date class.
 
+``` {r}
+walk <- read.csv('activity.csv',header=TRUE,as.is=TRUE)
+walk$date=as.Date(walk$date,format='%Y-%m-%d')
+```
+And now we should be good to go.
 
 ## What is mean total number of steps taken per day?
 
