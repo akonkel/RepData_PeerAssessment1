@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1 by Alex Konkel"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1 by Alex Konkel
 
 
 ## Loading and preprocessing the data
