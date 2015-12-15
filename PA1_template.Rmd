@@ -16,10 +16,11 @@ And now we'll need to get the file loaded for analysis.
 I'll also convert the date column to the date class.
 
 ``` {r}
+options(scipen=1, digits=2)
 walk <- read.csv('activity.csv',header=TRUE,as.is=TRUE)
 walk$date <- as.Date(walk$date,format='%Y-%m-%d')
 ```
-And now we should be good to go.
+And now we should be good to go.  The options call will affect how some numbers display later.
 
 ## What is mean total number of steps taken per day?
 The instructions say that we can ignore the NAs, so the total number of steps per day  
@@ -36,13 +37,13 @@ hist(totPerDay,breaks=20,col='light blue',xlab='Total Steps per Day',main='Histo
 ```
 
 We can see that no recorded steps is about as frequent as the other most common bin (~10000 steps).
-Finally, we want the mean and medium across days.  That's pretty similar to the total.
+Finally, we want the mean and medium across days.  That's easy.
 ``` {r}
 meanSteps <- mean(totPerDay)
 medianSteps <- median(totPerDay)
 ```
 
-The mean is `r round(meanSteps,2)` and the median is `r medianSteps`.
+The mean is `r meanSteps` and the median is `r medianSteps`.
 
 ## What is the average daily activity pattern?
 Next, instead of looking at the level of days we'll look at the level of 5 minute increments within days.  
@@ -52,8 +53,10 @@ totPerInc <- tapply(walk$steps,walk$interval,mean, na.rm=TRUE)
 plot(totPerInc,type='l',xlab='Increment of the Day',ylab='Average Steps per Increment')
 maxInc <- which.max(totPerInc)
 maxSteps <- totPerInc[maxInc]
+
 ```
-The most steps, on average, occur during the `r maxInc`th increment when an average of `r round(maxSteps,2)` steps are taken.
+The most steps, on average, occur during the `r maxInc`th increment when an average of `r maxSteps` steps are taken.  
+Since the intervals are 5 minutes long, this occurs `r 5*maxInc` minutes into the day, or `r strftime( as.POSIXct( "1970-01-01" ) + as.difftime( 5*maxInc, units="mins"), "%H:%M")` "military time".
 
 ## Imputing missing values
 Step 1 for filling in the missing values is to determine how many there are.
@@ -76,17 +79,20 @@ So now we have the missing observations separated out and replaced with an imput
 the adjusted R squared is less than .01.  But the regression says that some days are predictive  
 as is the interval in the day, so hopefully the imputation is better than a very simple average.
 
-Now we want to make a new dataset that incorporates the imputation and look at the mean and median steps across days.
+Now we want to make a new dataset that incorporates the imputation and look at the mean and median steps across days.  
+To aid comparison to the original dataset, I'll put the earlier histogram here on the bottom.
 ``` {r, fig.height=4}
 require(dplyr)
 walk2 <- walk %>% filter(!is.na(steps)) %>% bind_rows(missPoints) %>% arrange(date,interval)
 totPerDay2 <- tapply(walk2$steps,walk2$date,sum,na.rm=TRUE)
-hist(totPerDay2,breaks=20,col='light blue',xlab='Total Steps per Day',main='Histogram of Steps per Day After Imputation')
-meanSteps2 <- mean(totPerDay2)
-medianSteps2 <- median(totPerDay2)
+par(mfrow=c(2,1),mar=c(4,4,2,0))
+hist(totPerDay2,breaks=20,col='light blue',xlab='Total Steps per Day, With Imputation',main='',cex.axis=.6,cex.lab=.6,ylim=c(0,12))
+hist(totPerDay,breaks=20,col='light blue',xlab='Total Steps per Day, Original',main='',cex.axis=.6,cex.lab=.6,ylim=c(0,12))
+meanSteps2 <- round(mean(totPerDay2),2)
+medianSteps2 <- round(median(totPerDay2),2)
 ```
-After imputaton, the mean is `r round(meanSteps2,2)` and the median is `r medianSteps2`.  
-This is a difference of `r round(meanSteps2-meanSteps,2)` for the average and `r medianSteps2-medianSteps` for the median,
-which is a noticeable difference.
+After imputaton, the mean is `r meanSteps2` and the median is `r medianSteps2`.  
+This is a difference of `r meanSteps2-meanSteps` for the average and `r medianSteps2-medianSteps` for the median,
+which is a noticeable difference.   We can also see a shift in the histogram, presumably because days with 0 steps due to NAs now have some.
 
 ## Are there differences in activity patterns between weekdays and weekends?

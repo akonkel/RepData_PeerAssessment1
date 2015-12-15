@@ -13,10 +13,11 @@ I'll also convert the date column to the date class.
 
 
 ```r
+options(scipen=1, digits=2)
 walk <- read.csv('activity.csv',header=TRUE,as.is=TRUE)
 walk$date <- as.Date(walk$date,format='%Y-%m-%d')
 ```
-And now we should be good to go.
+And now we should be good to go.  The options call will affect how some numbers display later.
 
 ## What is mean total number of steps taken per day?
 The instructions say that we can ignore the NAs, so the total number of steps per day  
@@ -62,7 +63,7 @@ hist(totPerDay,breaks=20,col='light blue',xlab='Total Steps per Day',main='Histo
 ![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
 
 We can see that no recorded steps is about as frequent as the other most common bin (~10000 steps).
-Finally, we want the mean and medium across days.  That's pretty similar to the total.
+Finally, we want the mean and medium across days.  That's easy.
 
 ```r
 meanSteps <- mean(totPerDay)
@@ -86,7 +87,8 @@ plot(totPerInc,type='l',xlab='Increment of the Day',ylab='Average Steps per Incr
 maxInc <- which.max(totPerInc)
 maxSteps <- totPerInc[maxInc]
 ```
-The most steps, on average, occur during the 104th increment when an average of 206.17 steps are taken.
+The most steps, on average, occur during the 104th increment when an average of 206.17 steps are taken.  
+Since the intervals are 5 minutes long, this occurs 520 minutes into the day, or 08:40 "military time".
 
 ## Imputing missing values
 Step 1 for filling in the missing values is to determine how many there are.
@@ -111,7 +113,8 @@ So now we have the missing observations separated out and replaced with an imput
 the adjusted R squared is less than .01.  But the regression says that some days are predictive  
 as is the interval in the day, so hopefully the imputation is better than a very simple average.
 
-Now we want to make a new dataset that incorporates the imputation and look at the mean and median steps across days.
+Now we want to make a new dataset that incorporates the imputation and look at the mean and median steps across days.  
+To aid comparison to the original dataset, I'll put the earlier histogram here on the bottom.
 
 ```r
 require(dplyr)
@@ -134,17 +137,19 @@ require(dplyr)
 ```r
 walk2 <- walk %>% filter(!is.na(steps)) %>% bind_rows(missPoints) %>% arrange(date,interval)
 totPerDay2 <- tapply(walk2$steps,walk2$date,sum,na.rm=TRUE)
-hist(totPerDay2,breaks=20,col='light blue',xlab='Total Steps per Day',main='Histogram of Steps per Day After Imputation')
+par(mfrow=c(2,1),mar=c(4,4,2,0))
+hist(totPerDay2,breaks=20,col='light blue',xlab='Total Steps per Day, With Imputation',main='',cex.axis=.6,cex.lab=.6,ylim=c(0,12))
+hist(totPerDay,breaks=20,col='light blue',xlab='Total Steps per Day, Original',main='',cex.axis=.6,cex.lab=.6,ylim=c(0,12))
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
 
 ```r
-meanSteps2 <- mean(totPerDay2)
-medianSteps2 <- median(totPerDay2)
+meanSteps2 <- round(mean(totPerDay2),2)
+medianSteps2 <- round(median(totPerDay2),2)
 ```
-After imputaton, the mean is 1.082349\times 10^{4} and the median is 1.1015\times 10^{4}.  
+After imputaton, the mean is 10823.49 and the median is 11015.  
 This is a difference of 1469.26 for the average and 620 for the median,
-which is a noticeable difference.
+which is a noticeable difference.   We can also see a shift in the histogram, presumably because days with 0 steps due to NAs now have some.
 
 ## Are there differences in activity patterns between weekdays and weekends?
