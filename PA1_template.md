@@ -78,7 +78,7 @@ Here's a plot of the average number of steps per increment.
 
 ```r
 totPerInc <- tapply(walk$steps,walk$interval,mean, na.rm=TRUE)
-plot(totPerInc,type='l',xlab='Increment of the Day',ylab='Average Steps per Increment')
+plot(totPerInc,type='l',xlab='Interval of the Day',ylab='Average Steps per Interval')
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
@@ -153,3 +153,28 @@ This is a difference of 1469.26 for the average and 620 for the median,
 which is a noticeable difference.   We can also see a shift in the histogram, presumably because days with 0 steps due to NAs now have some.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Finally, we want to compare weekend days and weekdays.  I already labeled the days of the week earlier, 
+so now we just have to compress those into a new factor variable.  
+
+```r
+walk2 <- walk2 %>% mutate(day2 = ifelse(day=='Saturday' | day=='Sunday','weekend','weekday')) %>%
+  mutate(day2 = as.factor(day2))
+```
+Now we want a line plot of the average number of steps per interval, separated for weekends and weekdays.
+
+```r
+require(ggplot2)
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```r
+walk3 <- walk2 %>% group_by(interval,day2) %>% summarize(average=mean(steps))
+ggplot(walk3,aes(x=interval,y=average))+geom_line()+facet_grid(day2~.)+labs(x='Interval of the Day', y='Average Steps Taken')
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
+
+It looks like weekdays have a more prolonged build-up before the morning spike, and that spike is more consistent (there are two spikes on weekends).  More steps happen during the middle of the day on weekends, but the end of the day/evening appear fairly similar.
